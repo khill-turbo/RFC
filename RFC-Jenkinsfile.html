@@ -1,0 +1,207 @@
+
+
+- Start Date: (2018-18-10)
+
+- RFC PR:
+
+ 
+
+# Summary
+
+ 
+
+One paragraph explanation of the proposal.
+
+- Convert security scanning projects from Jenkins 1.x to Jenkinsfile and use shared scripts.
+
+ 
+
+# Motivation
+
+ 
+
+Why are we doing this?
+
+- We need to add SourceClear to the Fortify projects so all of the Fortify projects need to be
+
+modified.
+
+- When making SourceClear and Fortify changes to projects it would save time if the projects reused
+
+as much of the code as possible.
+
+- We want to make it easier for SourceClear and Fortify Jenkins jobs to be created by SHIELD and/or
+
+teams.
+
+- We want teams to have more control and visibility over their SourceClear and Fortify jobs,
+
+build/wget steps, NodeJS version, and scan results.
+
+ 
+
+What use cases does it support?
+
+- For all EXDG Client repositories that need SourceClear and/or Fortify scans.
+
+ 
+
+What is the expected outcome?
+
+- Jenkinsfile projects are easier to create, move to another server, reuse code, and
+
+generate Jenkins jobs.
+
+ 
+
+# Detailed design
+
+ 
+
+This is the bulk of the RFC. Explain the design in enough detail for somebody
+
+familiar with the project to understand, and for somebody familiar with the
+
+implementation to implement. This should get into specifics and corner-cases,
+
+and include examples of how the feature is used. Any new terminology should be
+
+defined here.
+
+- A `Github Organization` Jenkins pipeline project
+
+https://uslvebld02.am.company.com/job/SourceClear_Fortify_Scans/ is used to scan all org
+
+repositories and look in the master and hammerhead-develop branches for a Jenkinsfile named
+
+security/Jenkinsfile-Security it then creates a Jenkins job for each found. The
+
+SourceClear_Fortify_Scans job is configured to use shared scripts
+
+https://github.org.company.com/org/jenkins-scripts/tree/1.0.0/vars. The
+
+security/Jenkinsfile-Security file imports the shared libraries for SourceClear and Fortify,
+
+and sending email notification.
+
+ 
+
+- The template of security/Jenkinsfile-Security is
+
+https://github.org.company.com/org/jenkins-scripts/blob/master/Template-Jenkinsfile-Security
+
+ 
+
+- Documentation to setup the Jenkinsfile, and the edge cases, are described in
+
+https://github.org.company.com/org/jenkins-scripts/blob/master/README.md
+
+ 
+
+- The Fortify stage calls https://github.org.company.com/org/jenkins-scripts/blob/master/scan.sh
+
+and either a build file `REPOSITORY`/security/get_artifacts.sh is called or wget commands are
+
+  called from https://github.org.company.com/org/jenkins-scripts/blob/master/wget_artifacts.sh
+
+ 
+
+# Architectural Impact
+
+ 
+
+What names and terminology work best for these concepts and why? How is this
+
+idea best presented? As a continuation of existing architectural patterns, or as a
+
+wholly new one?
+
+- https://uslvebld02.am.company.com/job/SourceClear_Fortify_Scans/ should be referred to as
+
+the parent or orchestration job.
+
+ 
+
+# Dependencies and Risks
+
+ 
+
+What specific dependencies exist for this RFC?
+
+- We need most of version names for the repositories to be renamed by the ProdSec team to
+
+match their repository name.
+
+- We need teams to merge the security/Jenkinsfile-Security into their master branch.
+
+ 
+
+Will this have an impact on existing systems that need alteration?
+
+- The current Fortify projects need to have their parameters copied to the Jenkinsfile
+
+and after testing they should be disabled.
+
+ 
+
+# Drawbacks
+
+ 
+
+Why should we *not* do this? Please consider the impact on maintainability,
+
+scalability, and the integration of this feature with other existing and planned
+
+features and systems.
+
+- We should not do this if we decide that Jenkins 1.x projects are preferred over Jenkinsfile
+
+ 
+
+# Alternatives
+
+ 
+
+What other designs have been considered? What is the impact of not doing this?
+
+- Instead of using the README document to manually create `REPOSITORY`/security/Jenkinsfile-Security
+
+  we could have a Jenkins project that prompts the user for information and then it creates a Jenkinsfile
+
+  puts it in github.
+
+- Instead of setting the NodeJS in `REPOSITORY`/security/Jenkinsfile-Security from the Jenkins
+
+  installation use docker image.
+
+- Create sendSlack.groovy to use instead or in addition to
+
+https://github.org.company.com/org/jenkins-scripts/blob/1.0.0/vars/sendEmail.groovy
+
+- apollo-ps4 sets part of its scan directory from a file. Instead we may able to change
+
+the apollo-ps4 build project to create the artifact without the versioned directory structure.
+
+ 
+
+# Unresolved questions
+
+ 
+
+Optional, but suggested for first drafts. What parts of the design are still TBD?
+
+ 
+
+- Is memory still an issue? (Some testing done and it no longer required -Xmx4000M)
+
+- Does pulling down npm/@org/module get built artifact, this could be a good alternative to building the
+
+source for Hawklet and GCT.
+
+- How many projects have minified files? Do we need to get teams to provide unminified artifacts?
+
+- Should Fortify scans skip repo and only scan artifacts?
+
+- Where and how to make the list of NodeJS installations on LV02 available for easy viewing as this would be
+
+useful when setting up `REPOSITORY`/security/Jenkinsfile-Security.
